@@ -43,10 +43,8 @@ public class BarraHerramientas extends JPanel {
         JPanel panelNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         panelNav.setOpaque(false);
 
-        btnAtras = crearBotonNav("◀");
-        btnAdelante = crearBotonNav("▶");
-        btnAtras.setToolTipText("Atrás (Alt+←)");
-        btnAdelante.setToolTipText("Adelante (Alt+→)");
+        btnAtras = crearBotonNav("<html><b>&lt;</b></html>", "Atras");
+        btnAdelante = crearBotonNav("<html><b>&gt;</b></html>", "Adelante");
 
         btnAtras.addActionListener(e -> {
             if (onAtras != null) {
@@ -73,11 +71,11 @@ public class BarraHerramientas extends JPanel {
         JPanel panelAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         panelAcciones.setOpaque(false);
 
-        btnOrganizar = crearBotonAccion("Organizar", "Organizar archivos por tipo");
-        btnNuevaCarpeta = crearBotonAccion("Nueva carpeta", "Crear una nueva carpeta");
-        btnCopiar = crearBotonAccion("Copiar", "Copiar selección");
-        btnPegar = crearBotonAccion("Pegar", "Pegar elementos copiados");
-        btnRenombrar = crearBotonAccion("Renombrar", "Renombrar archivo o carpeta");
+        btnOrganizar = crearBotonAccion("Organizar", "Organizar archivos por tipo", 95);
+        btnNuevaCarpeta = crearBotonAccion("Nueva carpeta", "Crear una nueva carpeta", 115);
+        btnCopiar = crearBotonAccion("Copiar", "Copiar seleccion", 75);
+        btnPegar = crearBotonAccion("Pegar", "Pegar elementos copiados", 70);
+        btnRenombrar = crearBotonAccion("Renombrar", "Renombrar archivo o carpeta", 95);
 
         btnOrganizar.addActionListener(e -> {
             if (onOrganizar != null) {
@@ -121,21 +119,21 @@ public class BarraHerramientas extends JPanel {
         add(panelAcciones, BorderLayout.EAST);
     }
 
-    private JButton crearBotonNav(String texto) {
-        JButton b = new JButton(texto);
+    private JButton crearBotonNav(String html, String tooltip) {
+        JButton b = new JButton(html);
         b.setFont(new Font("Tahoma", Font.BOLD, 13));
-        b.setPreferredSize(new Dimension(32, 28));
+        b.setPreferredSize(new Dimension(34, 28));
         b.setFocusPainted(false);
         b.setBackground(BTN_BG);
         b.setForeground(BTN_FG);
+        b.setToolTipText(tooltip);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
-    private JButton crearBotonAccion(String texto, String tooltip) {
+    private JButton crearBotonAccion(String texto, String tooltip, int ancho) {
         JButton b = new JButton(texto);
         b.setFont(new Font("Tahoma", Font.PLAIN, 11));
-        int ancho = Math.max(80, texto.length() * 7 + 20);
         b.setPreferredSize(new Dimension(ancho, 28));
         b.setFocusPainted(false);
         b.setBackground(BTN_BG);
