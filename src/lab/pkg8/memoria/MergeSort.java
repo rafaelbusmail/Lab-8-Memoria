@@ -47,7 +47,7 @@ public class MergeSort implements Ordenador {
     private NodoArchivo mezclar(NodoArchivo a, NodoArchivo b) {
         if (a == null) {
             return b;
-        }
+        } 
         if (b == null) {
             return a;
         }
