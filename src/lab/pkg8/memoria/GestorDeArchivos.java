@@ -21,7 +21,7 @@ public class GestorDeArchivos {
         this.portapapeles = new File[0];
     }
     
-    //crear carpeta
+
     
     public ResultadoOperacion crearCarpeta(File destino, String nombre){
         if(destino == null || !destino.isDirectory()){
@@ -135,7 +135,6 @@ public class GestorDeArchivos {
     }
     
     
-    // metodos auciliares 
     private boolean nombreValido(String nombre){
         if(nombre == null || nombre.trim().isEmpty()){
             return false;
@@ -191,8 +190,6 @@ public class GestorDeArchivos {
             return false;
         }
     }
-    
-    // getters
     
     public boolean tienePortapapeles(){
         return portapapeles != null && portapapeles.length > 0;
