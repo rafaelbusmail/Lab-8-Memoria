@@ -83,9 +83,22 @@ public class MainFrame extends JFrame {
             int n = panelContenido.cargarCarpeta(ruta);
             setEstado("Carpeta: " + ruta);
             lblConteo.setText(n + " elemento(s)   |   Derechos Reservados UNITEC");
+            actualizarBotonesNavegacion();
         });
 
-        barra.setOnOrganizar(() -> panelContenido.organizar());
+        panelContenido.setOnNavegar(ruta -> {
+            barra.setRutaActual(ruta);
+            int n = panelContenido.cargarCarpeta(ruta);
+            setEstado("Carpeta: " + ruta);
+            lblConteo.setText(n + " elemento(s)   |   Derechos Reservados UNITEC");
+            panelArbol.navegarProgramatico(ruta);
+            actualizarBotonesNavegacion();
+        });
+
+        barra.setOnOrganizar(() -> {
+            panelContenido.organizar();
+            panelArbol.refrescar();
+        });
         barra.setOnNuevaCarpeta(() -> {
             panelContenido.nuevaCarpeta();
             panelArbol.refrescar();
@@ -108,7 +121,9 @@ public class MainFrame extends JFrame {
                 setEstado("Carpeta: " + ant);
                 lblConteo.setText(n + " elemento(s)   |   Derechos Reservados UNITEC");
             }
+            actualizarBotonesNavegacion();
         });
+
         barra.setOnAdelante(() -> {
             String sig = panelArbol.navegarAdelante();
             if (sig != null) {
@@ -117,7 +132,13 @@ public class MainFrame extends JFrame {
                 setEstado("Carpeta: " + sig);
                 lblConteo.setText(n + " elemento(s)   |   Derechos Reservados UNITEC");
             }
+            actualizarBotonesNavegacion();
         });
+    }
+
+    private void actualizarBotonesNavegacion() {
+        barra.setAtrasEnabled(panelArbol.puedeIrAtras());
+        barra.setAdelanteEnabled(panelArbol.puedeIrAdelante());
     }
 
     public void setEstado(String msg) {

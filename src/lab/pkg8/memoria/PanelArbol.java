@@ -37,7 +37,6 @@ public class PanelArbol extends JPanel {
         add(lblHeader, BorderLayout.NORTH);
 
         File raiz = new File(System.getProperty("user.home"));
-
         DefaultMutableTreeNode nodoRaiz = new DefaultMutableTreeNode(new NodoInfo(raiz));
         cargarHijos(nodoRaiz, raiz);
 
@@ -47,14 +46,15 @@ public class PanelArbol extends JPanel {
         arbol.setShowsRootHandles(true);
         arbol.setFont(new Font("Tahoma", Font.PLAIN, 13));
         arbol.setBackground(new Color(0xFAFAF8));
-        arbol.setRowHeight(26);   
+        arbol.setRowHeight(26);
 
         DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
             @Override
             public Component getTreeCellRendererComponent(
                     JTree tree, Object value, boolean sel, boolean expanded,
                     boolean leaf, int row, boolean hasFocus) {
-                super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+                super.getTreeCellRendererComponent(
+                        tree, value, sel, expanded, leaf, row, hasFocus);
                 setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
                 setFont(tree.getFont());
                 if (sel) {
@@ -80,7 +80,7 @@ public class PanelArbol extends JPanel {
                 NodoInfo info = (NodoInfo) nodo.getUserObject();
                 if (nodo.getChildCount() == 0
                         || (nodo.getChildCount() == 1
-                        && nodo.getFirstChild().toString().equals("..."))) {
+                        && "...".equals(nodo.getFirstChild().toString()))) {
                     nodo.removeAllChildren();
                     cargarHijos(nodo, info.archivo);
                     modelo.reload(nodo);
@@ -124,39 +124,113 @@ public class PanelArbol extends JPanel {
         if (hijos == null) {
             return;
         }
-        java.util.Arrays.sort(hijos, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        java.util.Arrays.sort(hijos,
+                (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         for (File h : hijos) {
-            DefaultMutableTreeNode hijo = new DefaultMutableTreeNode(new NodoInfo(h));
-            File[] subCarpetas = h.listFiles(File::isDirectory);
-            if (subCarpetas != null && subCarpetas.length > 0) {
+            DefaultMutableTreeNode hijo
+                    = new DefaultMutableTreeNode(new NodoInfo(h));
+            File[] sub = h.listFiles(File::isDirectory);
+            if (sub != null && sub.length > 0) {
                 hijo.add(new DefaultMutableTreeNode("..."));
             }
             nodo.add(hijo);
         }
     }
 
-    public void navegarA(String ruta) {
-        if (onCarpetaSeleccionada != null) {
-            onCarpetaSeleccionada.accept(ruta);
-        }
-    }
-
     public String navegarAtras() {
-        if (pilaAtras.isEmpty()) {
+        if (pilaAtras.isEmpty() || rutaActual == null) {
             return null;
         }
         pilaAdelante.push(rutaActual);
         rutaActual = pilaAtras.pop();
+        seleccionarEnArbol(rutaActual);
         return rutaActual;
     }
 
     public String navegarAdelante() {
-        if (pilaAdelante.isEmpty()) {
+        if (pilaAdelante.isEmpty() || rutaActual == null) {
             return null;
         }
         pilaAtras.push(rutaActual);
         rutaActual = pilaAdelante.pop();
+        seleccionarEnArbol(rutaActual);
         return rutaActual;
+    }
+
+    private void seleccionarEnArbol(String ruta) {
+        if (ruta == null) {
+            return;
+        }
+        TreePath path = encontrarPath(ruta);
+        if (path != null) {
+            TreeSelectionListener[] listeners
+                    = arbol.getTreeSelectionListeners();
+            for (TreeSelectionListener l : listeners) {
+                arbol.removeTreeSelectionListener(l);
+            }
+            arbol.setSelectionPath(path);
+            arbol.scrollPathToVisible(path);
+            for (TreeSelectionListener l : listeners) {
+                arbol.addTreeSelectionListener(l);
+            }
+        }
+    }
+
+    private TreePath encontrarPath(String ruta) {
+        DefaultMutableTreeNode raiz
+                = (DefaultMutableTreeNode) modelo.getRoot();
+        return buscarRecursivo(raiz, ruta);
+    }
+
+    private TreePath buscarRecursivo(DefaultMutableTreeNode nodo, String ruta) {
+        if (!(nodo.getUserObject() instanceof NodoInfo)) {
+            return null;
+        }
+        NodoInfo info = (NodoInfo) nodo.getUserObject();
+        if (info.archivo.getAbsolutePath().equals(ruta)) {
+            return new TreePath(nodo.getPath());
+        }
+        if (nodo.getChildCount() == 1
+                && "...".equals(nodo.getFirstChild().toString())) {
+            nodo.removeAllChildren();
+            cargarHijos(nodo, info.archivo);
+            modelo.reload(nodo);
+        }
+        for (int i = 0; i < nodo.getChildCount(); i++) {
+            DefaultMutableTreeNode hijo
+                    = (DefaultMutableTreeNode) nodo.getChildAt(i);
+            if (!(hijo.getUserObject() instanceof NodoInfo)) {
+                continue;
+            }
+            NodoInfo infoHijo = (NodoInfo) hijo.getUserObject();
+            if (ruta.startsWith(infoHijo.archivo.getAbsolutePath())) {
+                TreePath encontrado = buscarRecursivo(hijo, ruta);
+                if (encontrado != null) {
+                    return encontrado;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean puedeIrAtras() {
+        return !pilaAtras.isEmpty();
+    }
+
+    public boolean puedeIrAdelante() {
+        return !pilaAdelante.isEmpty();
+    }
+
+    public void navegarProgramatico(String ruta) {
+        if (ruta == null) {
+            return;
+        }
+        if (rutaActual != null && !rutaActual.equals(ruta)) {
+            pilaAtras.push(rutaActual);
+            pilaAdelante.clear();
+        }
+        rutaActual = ruta;
+        seleccionarEnArbol(ruta);
     }
 
     public void setOnCarpetaSeleccionada(Consumer<String> c) {

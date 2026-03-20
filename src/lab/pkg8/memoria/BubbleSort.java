@@ -1,14 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package lab.pkg8.memoria;
 
-/**
- *
- * @author riche
- */
 public class BubbleSort implements Ordenador {
+
     @Override
     public void ordenar(ListaEnlazadaArchivos lista, Criterio criterio) {
         if (lista == null || lista.estaVacia() || lista.tamano() == 1) {
@@ -27,6 +20,7 @@ public class BubbleSort implements Ordenador {
             }
         } while (huboCambio);
     }
+
     private int comparar(NodoArchivo a, NodoArchivo b, Criterio criterio) {
         switch (criterio) {
             case NOMBRE:
@@ -35,10 +29,13 @@ public class BubbleSort implements Ordenador {
                 return a.getTipo().compareToIgnoreCase(b.getTipo());
             case TAMANO:
                 return Long.compare(a.getTamano(), b.getTamano());
+            case FECHA:
+                return a.getFechaModificacion().compareTo(b.getFechaModificacion());
             default:
                 return 0;
         }
     }
+
     private void intercambiarDatos(NodoArchivo a, NodoArchivo b) {
         String nombre = a.getNombre();
         String ruta = a.getRuta();
@@ -46,12 +43,14 @@ public class BubbleSort implements Ordenador {
         java.util.Date fecha = a.getFechaModificacion();
         long tamano = a.getTamano();
         boolean carpeta = a.isCarpeta();
+
         a.setNombre(b.getNombre());
         a.setRuta(b.getRuta());
         a.setTipo(b.getTipo());
         a.setFechaModificacion(b.getFechaModificacion());
         a.setTamano(b.getTamano());
         a.setCarpeta(b.isCarpeta());
+
         b.setNombre(nombre);
         b.setRuta(ruta);
         b.setTipo(tipo);

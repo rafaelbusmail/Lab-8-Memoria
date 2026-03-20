@@ -46,6 +46,9 @@ public class BarraHerramientas extends JPanel {
         btnAtras = crearBotonNav("<html><b>&lt;</b></html>", "Atras");
         btnAdelante = crearBotonNav("<html><b>&gt;</b></html>", "Adelante");
 
+        btnAtras.setEnabled(false);
+        btnAdelante.setEnabled(false);
+
         btnAtras.addActionListener(e -> {
             if (onAtras != null) {
                 onAtras.run();
@@ -71,11 +74,11 @@ public class BarraHerramientas extends JPanel {
         JPanel panelAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         panelAcciones.setOpaque(false);
 
-        btnOrganizar = crearBotonAccion("Organizar", "Organizar archivos por tipo", 95);
+        btnOrganizar = crearBotonAccion("Organizar", "Organizar archivos por tipo", 100);
         btnNuevaCarpeta = crearBotonAccion("Nueva carpeta", "Crear una nueva carpeta", 115);
         btnCopiar = crearBotonAccion("Copiar", "Copiar seleccion", 75);
         btnPegar = crearBotonAccion("Pegar", "Pegar elementos copiados", 70);
-        btnRenombrar = crearBotonAccion("Renombrar", "Renombrar archivo o carpeta", 95);
+        btnRenombrar = crearBotonAccion("Renombrar", "Renombrar archivo o carpeta", 110);
 
         btnOrganizar.addActionListener(e -> {
             if (onOrganizar != null) {
@@ -145,6 +148,14 @@ public class BarraHerramientas extends JPanel {
 
     public void setRutaActual(String ruta) {
         txtRuta.setText(ruta);
+    }
+
+    public void setAtrasEnabled(boolean enabled) {
+        btnAtras.setEnabled(enabled);
+    }
+
+    public void setAdelanteEnabled(boolean enabled) {
+        btnAdelante.setEnabled(enabled);
     }
 
     public void setOnAtras(Runnable r) {
