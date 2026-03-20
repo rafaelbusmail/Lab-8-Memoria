@@ -30,12 +30,33 @@ public class UtilArchivos {
         if (nombre == null || nombre.trim().isEmpty()) {
             return false;
         }
-        String[] prohibidos = {"\\", "/", ":", "*", "?", "\"", "<", ">", "|"};
+        String[] prohibidos = { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
         for (String p : prohibidos) {
             if (nombre.contains(p)) {
                 return false;
             }
         }
         return true;
+    }
+
+    public static ListaEnlazadaArchivos convertirALista(File[] archivos) {
+        ListaEnlazadaArchivos lista = new ListaEnlazadaArchivos();
+        if (archivos == null) {
+            return lista;
+        }
+        for (File f : archivos) {
+            if (f.isHidden()) {
+                continue;
+            }
+            NodoArchivo nodo = new NodoArchivo(
+                    f.getName(),
+                    f.getAbsolutePath(),
+                    f.isDirectory() ? "Carpeta" : obtenerExtension(f),
+                    new java.util.Date(f.lastModified()),
+                    f.length(),
+                    f.isDirectory());
+            lista.agregar(nodo);
+        }
+        return lista;
     }
 }

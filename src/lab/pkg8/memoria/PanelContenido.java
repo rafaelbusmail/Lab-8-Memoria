@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+
 import java.util.function.Consumer;
 
 public class PanelContenido extends JPanel {
@@ -17,7 +17,7 @@ public class PanelContenido extends JPanel {
     private static final int COL_TAMANO = 3;
 
     private static final String[] COLUMNAS = {
-        "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
+            "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
     };
     
 
@@ -77,6 +77,7 @@ public class PanelContenido extends JPanel {
         tabla.setShowHorizontalLines(true);
         tabla.setShowVerticalLines(false);
         tabla.setFillsViewportHeight(true);
+        tabla.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tabla.setBackground(Color.WHITE);
 
         configurarRenderers();
@@ -214,25 +215,9 @@ public class PanelContenido extends JPanel {
             return 0;
         }
 
-        int count = 0;
-        for (File f : items) {
-            if (f.isHidden()) {
-                continue;
-            }
-            NodoArchivo nodo = new NodoArchivo(
-                    f.getName(),
-                    f.getAbsolutePath(),
-                    f.isDirectory() ? "Carpeta" : obtenerTipo(f),
-                    new Date(f.lastModified()),
-                    f.isDirectory() ? 0L : f.length(),
-                    f.isDirectory()
-            );
-            listaActual.agregar(nodo);
-            count++;
-        }
-
+        listaActual = UtilArchivos.convertirALista(items);
         aplicarOrden();
-        return count;
+        return items.length;
     }
 
     private void aplicarOrden() {
@@ -319,16 +304,23 @@ public class PanelContenido extends JPanel {
     }
 
     public void copiar() {
-        File sel = getArchivoSeleccionado();
-        if (sel == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Selecciona un archivo o carpeta primero.");
+        File[] seleccion = getArchivosSeleccionados();
+        if (seleccion.length == 0) {
+            JOptionPane.showMessageDialog(this, "Seleccione uno o mas elementos para copiar.");
             return;
         }
-        ResultadoOperacion res = gestor.copiar(new File[]{sel});
-        JOptionPane.showMessageDialog(this, res.getMensaje(),
-                res.isExito() ? "Copiado" : "Error",
-                res.isExito() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+        ResultadoOperacion res = gestor.copiar(seleccion);
+        JOptionPane.showMessageDialog(this, res.getMensaje());
+    }
+
+    public File[] getArchivosSeleccionados() {
+        int[] filas = tabla.getSelectedRows();
+        File[] seleccion = new File[filas.length];
+        for (int i = 0; i < filas.length; i++) {
+            String nombre = (String) modeloTabla.getValueAt(filas[i], COL_NOMBRE);
+            seleccion[i] = new File(carpetaActual, nombre);
+        }
+        return seleccion;
     }
 
     public void pegar() {
@@ -415,38 +407,6 @@ public class PanelContenido extends JPanel {
         };
     }
 
-    private String obtenerTipo(File f) {
-        String n = f.getName().toLowerCase();
-        if (n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png") || n.endsWith(".gif")) {
-            return "Imagen";
-        }
-        if (n.endsWith(".pdf")) {
-            return "Documento PDF";
-        }
-        if (n.endsWith(".docx") || n.endsWith(".doc")) {
-            return "Documento Word";
-        }
-        if (n.endsWith(".xlsx") || n.endsWith(".xls")) {
-            return "Hoja de calculo";
-        }
-        if (n.endsWith(".txt")) {
-            return "Texto plano";
-        }
-        if (n.endsWith(".mp3") || n.endsWith(".wav") || n.endsWith(".flac")) {
-            return "Musica";
-        }
-        if (n.endsWith(".mp4") || n.endsWith(".avi") || n.endsWith(".mkv")) {
-            return "Video";
-        }
-        if (n.endsWith(".zip") || n.endsWith(".rar") || n.endsWith(".7z")) {
-            return "Comprimido";
-        }
-        if (n.endsWith(".exe")) {
-            return "Ejecutable";
-        }
-        int dot = n.lastIndexOf('.');
-        return dot >= 0 ? n.substring(dot + 1).toUpperCase() : "Archivo";
-    }
 
     private String formatearTamano(long bytes) {
         if (bytes <= 0) {
