@@ -17,7 +17,7 @@ public class PanelContenido extends JPanel {
     private static final int COL_TAMANO = 3;
 
     private static final String[] COLUMNAS = {
-        "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
+            "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
     };
 
     private JTable tabla;
@@ -122,11 +122,11 @@ public class PanelContenido extends JPanel {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
         NodoArchivo actual = lista.getCabeza();
         while (actual != null) {
-            modeloTabla.addRow(new Object[]{
-                actual.getNombre(),
-                sdf.format(actual.getFechaModificacion()),
-                actual.getTipo(),
-                actual.getTamano()
+            modeloTabla.addRow(new Object[] {
+                    actual.getNombre(),
+                    sdf.format(actual.getFechaModificacion()),
+                    actual.getTipo(),
+                    actual.getTamano()
             });
             actual = actual.getSiguiente();
         }
@@ -167,11 +167,11 @@ public class PanelContenido extends JPanel {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
         NodoArchivo actual = lista.getCabeza();
         while (actual != null) {
-            modeloTabla.addRow(new Object[]{
-                actual.getNombre(),
-                sdf.format(actual.getFechaModificacion()),
-                actual.getTipo(),
-                actual.getTamano()
+            modeloTabla.addRow(new Object[] {
+                    actual.getNombre(),
+                    sdf.format(actual.getFechaModificacion()),
+                    actual.getTipo(),
+                    actual.getTamano()
             });
             actual = actual.getSiguiente();
         }

@@ -30,7 +30,7 @@ public class UtilArchivos {
         if (nombre == null || nombre.trim().isEmpty()) {
             return false;
         }
-        String[] prohibidos = {"\\", "/", ":", "*", "?", "\"", "<", ">", "|"};
+        String[] prohibidos = { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
         for (String p : prohibidos) {
             if (nombre.contains(p)) {
                 return false;
