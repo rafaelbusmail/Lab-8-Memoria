@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lab.pkg8.memoria;
 
 import javax.swing.*;
@@ -18,8 +13,8 @@ public class PanelArbol extends JPanel {
     private DefaultTreeModel modelo;
     private Consumer<String> onCarpetaSeleccionada;
 
-    private java.util.Deque<String> pilaAtras = new java.util.ArrayDeque<>();
-    private java.util.Deque<String> pilaAdelante = new java.util.ArrayDeque<>();
+    private final java.util.Deque<String> pilaAtras = new java.util.ArrayDeque<>();
+    private final java.util.Deque<String> pilaAdelante = new java.util.ArrayDeque<>();
     private String rutaActual = null;
 
     public PanelArbol() {
@@ -28,22 +23,54 @@ public class PanelArbol extends JPanel {
 
     private void construir() {
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(0xACA899)));
-        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(0xBBB8AF)));
+        setBackground(new Color(0xFAFAF8));
+
+        JLabel lblHeader = new JLabel("  Carpetas");
+        lblHeader.setFont(new Font("Tahoma", Font.BOLD, 12));
+        lblHeader.setForeground(new Color(0x444444));
+        lblHeader.setBackground(new Color(0xECEAE3));
+        lblHeader.setOpaque(true);
+        lblHeader.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xBBB8AF)),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        add(lblHeader, BorderLayout.NORTH);
 
         File raiz = new File(System.getProperty("user.home"));
 
-        DefaultMutableTreeNode nodoRaiz = new DefaultMutableTreeNode(
-                new NodoInfo(raiz));
+        DefaultMutableTreeNode nodoRaiz = new DefaultMutableTreeNode(new NodoInfo(raiz));
         cargarHijos(nodoRaiz, raiz);
 
         modelo = new DefaultTreeModel(nodoRaiz);
         arbol = new JTree(modelo);
         arbol.setRootVisible(true);
         arbol.setShowsRootHandles(true);
-        arbol.setFont(new Font("Tahoma", Font.PLAIN, 12));
-        arbol.setBackground(Color.WHITE);
-        arbol.setRowHeight(20);
+        arbol.setFont(new Font("Tahoma", Font.PLAIN, 13));
+        arbol.setBackground(new Color(0xFAFAF8));
+        arbol.setRowHeight(26);   
+
+        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
+            @Override
+            public Component getTreeCellRendererComponent(
+                    JTree tree, Object value, boolean sel, boolean expanded,
+                    boolean leaf, int row, boolean hasFocus) {
+                super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+                setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+                setFont(tree.getFont());
+                if (sel) {
+                    setForeground(Color.WHITE);
+                    setBackground(new Color(0x316AC5));
+                } else {
+                    setForeground(new Color(0x1A1A1A));
+                    setBackground(new Color(0xFAFAF8));
+                }
+                return this;
+            }
+        };
+        renderer.setBackgroundNonSelectionColor(new Color(0xFAFAF8));
+        renderer.setBackgroundSelectionColor(new Color(0x316AC5));
+        renderer.setBorderSelectionColor(new Color(0x316AC5));
+        arbol.setCellRenderer(renderer);
 
         arbol.addTreeWillExpandListener(new TreeWillExpandListener() {
             @Override
@@ -51,7 +78,10 @@ public class PanelArbol extends JPanel {
                 DefaultMutableTreeNode nodo
                         = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
                 NodoInfo info = (NodoInfo) nodo.getUserObject();
-                if (nodo.getChildCount() == 0) {
+                if (nodo.getChildCount() == 0
+                        || (nodo.getChildCount() == 1
+                        && nodo.getFirstChild().toString().equals("..."))) {
+                    nodo.removeAllChildren();
                     cargarHijos(nodo, info.archivo);
                     modelo.reload(nodo);
                 }
@@ -84,7 +114,8 @@ public class PanelArbol extends JPanel {
 
         JScrollPane scroll = new JScrollPane(arbol);
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getVerticalScrollBar().setUnitIncrement(20);
+        scroll.setBackground(new Color(0xFAFAF8));
         add(scroll, BorderLayout.CENTER);
     }
 
@@ -93,14 +124,11 @@ public class PanelArbol extends JPanel {
         if (hijos == null) {
             return;
         }
-        java.util.Arrays.sort(hijos, (a, b)
-                -> a.getName().compareToIgnoreCase(b.getName()));
+        java.util.Arrays.sort(hijos, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         for (File h : hijos) {
-            DefaultMutableTreeNode hijo
-                    = new DefaultMutableTreeNode(new NodoInfo(h));
-            // agregar un nodo placeholder para mostrar la flecha de expansion
-            if (h.isDirectory() && h.listFiles() != null
-                    && h.listFiles(File::isDirectory).length > 0) {
+            DefaultMutableTreeNode hijo = new DefaultMutableTreeNode(new NodoInfo(h));
+            File[] subCarpetas = h.listFiles(File::isDirectory);
+            if (subCarpetas != null && subCarpetas.length > 0) {
                 hijo.add(new DefaultMutableTreeNode("..."));
             }
             nodo.add(hijo);
@@ -159,8 +187,8 @@ public class PanelArbol extends JPanel {
 
         @Override
         public String toString() {
-            return archivo.getName().isEmpty()
-                    ? archivo.getAbsolutePath() : archivo.getName();
+            String n = archivo.getName();
+            return n.isEmpty() ? archivo.getAbsolutePath() : n;
         }
     }
 }
