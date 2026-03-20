@@ -37,11 +37,13 @@ public class MainFrame extends JFrame {
         lblTitulo.setFont(new Font("Tahoma", Font.BOLD, 15));
         lblTitulo.setForeground(Color.WHITE);
         panelTitulo.add(lblTitulo, BorderLayout.WEST);
-        add(panelTitulo, BorderLayout.NORTH);
 
         barra = new BarraHerramientas();
-        add(barra, BorderLayout.AFTER_FIRST_LINE);
-
+        JPanel panelSuperior = new JPanel(new BorderLayout());
+        panelSuperior.add(panelTitulo, BorderLayout.NORTH);
+        panelSuperior.add(barra, BorderLayout.SOUTH);
+        add(panelSuperior, BorderLayout.NORTH);
+        
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         split.setDividerLocation(220);
         split.setDividerSize(4);
