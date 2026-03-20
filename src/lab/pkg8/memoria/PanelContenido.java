@@ -19,6 +19,7 @@ public class PanelContenido extends JPanel {
     private static final String[] COLUMNAS = {
         "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
     };
+    
 
     private JTable tabla;
     private DefaultTableModel modeloTabla;
