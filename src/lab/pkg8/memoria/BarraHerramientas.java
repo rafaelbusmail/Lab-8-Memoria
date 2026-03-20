@@ -1,12 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lab.pkg8.memoria;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import java.awt.*;
 
 public class BarraHerramientas extends JPanel {
@@ -28,24 +22,31 @@ public class BarraHerramientas extends JPanel {
     private Runnable onPegar;
     private Runnable onRenombrar;
 
+    private static final Color BG = new Color(0xF0EDE6);
+    private static final Color BORDER = new Color(0xACA899);
+    private static final Color BTN_BG = new Color(0xE8E4DC);
+    private static final Color BTN_FG = new Color(0x1A1A1A);
+    private static final Color RUTA_BG = Color.WHITE;
+    private static final Color RUTA_BDR = new Color(0x7F9DB9);
+
     public BarraHerramientas() {
         construir();
     }
 
     private void construir() {
-        setLayout(new BorderLayout(4, 0));
-        setBackground(new Color(0xECE9D8));
+        setLayout(new BorderLayout(6, 0));
+        setBackground(BG);
         setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xACA899)),
-                BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+                BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
 
-        JPanel panelNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        JPanel panelNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         panelNav.setOpaque(false);
 
-        btnAtras = crearBotonNav("\u2190"); // flecha izquierda
-        btnAdelante = crearBotonNav("\u2192"); // flecha derecha
-        btnAtras.setToolTipText("Atrás");
-        btnAdelante.setToolTipText("Adelante");
+        btnAtras = crearBotonNav("◀");
+        btnAdelante = crearBotonNav("▶");
+        btnAtras.setToolTipText("Atrás (Alt+←)");
+        btnAdelante.setToolTipText("Adelante (Alt+→)");
 
         btnAtras.addActionListener(e -> {
             if (onAtras != null) {
@@ -64,19 +65,19 @@ public class BarraHerramientas extends JPanel {
         txtRuta = new JTextField();
         txtRuta.setFont(new Font("Tahoma", Font.PLAIN, 12));
         txtRuta.setEditable(false);
-        txtRuta.setBackground(Color.WHITE);
+        txtRuta.setBackground(RUTA_BG);
         txtRuta.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x7F9DB9)),
-                BorderFactory.createEmptyBorder(2, 4, 2, 4)));
+                BorderFactory.createLineBorder(RUTA_BDR),
+                BorderFactory.createEmptyBorder(3, 6, 3, 6)));
 
-        JPanel panelAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
+        JPanel panelAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         panelAcciones.setOpaque(false);
 
-        btnOrganizar = crearBotonAccion("Organizar");
-        btnNuevaCarpeta = crearBotonAccion("Nueva carpeta");
-        btnCopiar = crearBotonAccion("Copiar");
-        btnPegar = crearBotonAccion("Pegar");
-        btnRenombrar = crearBotonAccion("Renombrar");
+        btnOrganizar = crearBotonAccion("Organizar", "Organizar archivos por tipo");
+        btnNuevaCarpeta = crearBotonAccion("Nueva carpeta", "Crear una nueva carpeta");
+        btnCopiar = crearBotonAccion("Copiar", "Copiar selección");
+        btnPegar = crearBotonAccion("Pegar", "Pegar elementos copiados");
+        btnRenombrar = crearBotonAccion("Renombrar", "Renombrar archivo o carpeta");
 
         btnOrganizar.addActionListener(e -> {
             if (onOrganizar != null) {
@@ -104,7 +105,12 @@ public class BarraHerramientas extends JPanel {
             }
         });
 
+        JSeparator sep = new JSeparator(JSeparator.VERTICAL);
+        sep.setPreferredSize(new Dimension(1, 22));
+        sep.setForeground(BORDER);
+
         panelAcciones.add(btnOrganizar);
+        panelAcciones.add(sep);
         panelAcciones.add(btnNuevaCarpeta);
         panelAcciones.add(btnCopiar);
         panelAcciones.add(btnPegar);
@@ -117,19 +123,25 @@ public class BarraHerramientas extends JPanel {
 
     private JButton crearBotonNav(String texto) {
         JButton b = new JButton(texto);
-        b.setFont(new Font("Tahoma", Font.BOLD, 14));
-        b.setPreferredSize(new Dimension(28, 24));
+        b.setFont(new Font("Tahoma", Font.BOLD, 13));
+        b.setPreferredSize(new Dimension(32, 28));
         b.setFocusPainted(false);
-        b.setBackground(new Color(0xECE9D8));
+        b.setBackground(BTN_BG);
+        b.setForeground(BTN_FG);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
-    private JButton crearBotonAccion(String texto) {
+    private JButton crearBotonAccion(String texto, String tooltip) {
         JButton b = new JButton(texto);
         b.setFont(new Font("Tahoma", Font.PLAIN, 11));
-        b.setPreferredSize(new Dimension(texto.length() * 7 + 16, 24));
+        int ancho = Math.max(80, texto.length() * 7 + 20);
+        b.setPreferredSize(new Dimension(ancho, 28));
         b.setFocusPainted(false);
-        b.setBackground(new Color(0xECE9D8));
+        b.setBackground(BTN_BG);
+        b.setForeground(BTN_FG);
+        b.setToolTipText(tooltip);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
@@ -165,5 +177,3 @@ public class BarraHerramientas extends JPanel {
         onRenombrar = r;
     }
 }
-
-
