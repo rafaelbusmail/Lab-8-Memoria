@@ -3,26 +3,31 @@ package lab.pkg8.memoria;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Consumer;
 
 public class PanelContenido extends JPanel {
 
-    private JTable tabla;
-    private DefaultTableModel modeloTabla;
-    private String carpetaActual;
-
-    private final GestorDeArchivos gestor = new GestorDeArchivos();
-
-    private static final SimpleDateFormat SDF
-            = new SimpleDateFormat("dd/MM/yyyy  HH:mm");
+    private static final int COL_NOMBRE = 0;
+    private static final int COL_FECHA = 1;
+    private static final int COL_TIPO = 2;
+    private static final int COL_TAMANO = 3;
 
     private static final String[] COLUMNAS = {
         "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
     };
 
+    private JTable tabla;
+    private DefaultTableModel modeloTabla;
+    private String carpetaActual;
+    private GestorDeArchivos gestor;
+    private Consumer<String> onNavegar;
+
     public PanelContenido() {
+        this.gestor = new GestorDeArchivos();
         construir();
     }
 
@@ -30,274 +35,226 @@ public class PanelContenido extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        JLabel lblHeader = new JLabel("  Contenido");
-        lblHeader.setFont(new Font("Tahoma", Font.BOLD, 12));
-        lblHeader.setForeground(new Color(0x444444));
-        lblHeader.setBackground(new Color(0xECEAE3));
-        lblHeader.setOpaque(true);
-        lblHeader.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xBBB8AF)),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
-        add(lblHeader, BorderLayout.NORTH);
-
         modeloTabla = new DefaultTableModel(COLUMNAS, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
             }
+
+            @Override
+            public Class<?> getColumnClass(int c) {
+                if (c == COL_TAMANO) {
+                    return Long.class;
+                }
+                return String.class;
+            }
         };
 
         tabla = new JTable(modeloTabla);
-        tabla.setFont(new Font("Tahoma", Font.PLAIN, 13));
-        tabla.setRowHeight(28);
-        tabla.setIntercellSpacing(new Dimension(0, 1));
-        tabla.setGridColor(new Color(0xE8E5E0));
-        tabla.setSelectionBackground(new Color(0x316AC5));
-        tabla.setSelectionForeground(Color.WHITE);
-        tabla.setShowHorizontalLines(true);
-        tabla.setShowVerticalLines(false);
-        tabla.setFillsViewportHeight(true);
-        tabla.setBackground(Color.WHITE);
+        tabla.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        tabla.setRowHeight(24);
+        tabla.setShowGrid(false);
+        tabla.setIntercellSpacing(new Dimension(0, 0));
+        tabla.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.getTableHeader().setFont(new Font("Tahoma", Font.PLAIN, 12));
 
-        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer() {
+        TableColumnModel cm = tabla.getColumnModel();
+        cm.getColumn(COL_NOMBRE).setPreferredWidth(300);
+        cm.getColumn(COL_FECHA).setPreferredWidth(150);
+        cm.getColumn(COL_TIPO).setPreferredWidth(100);
+        cm.getColumn(COL_TAMANO).setPreferredWidth(100);
+
+        DefaultTableCellRenderer renderTamano = new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object v, boolean sel, boolean focus, int r, int c) {
-                super.getTableCellRendererComponent(t, v, sel, focus, r, c);
-                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 6));
-                if (!sel) {
-                    setBackground(r % 2 == 0 ? Color.WHITE : new Color(0xF7F5F2));
+            public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+                if (v instanceof Long) {
+                    v = formatearTamano((Long) v);
                 }
-                return this;
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, v, s, f, r, c);
+                l.setHorizontalAlignment(SwingConstants.RIGHT);
+                return l;
             }
         };
+        cm.getColumn(COL_TAMANO).setCellRenderer(renderTamano);
 
-
-        DefaultTableCellRenderer nombreRenderer = new DefaultTableCellRenderer() {
+        tabla.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object v, boolean sel, boolean focus, int r, int c) {
-                super.getTableCellRendererComponent(t, v, sel, focus, r, c);
-                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 6));
-                if (!sel) {
-                    setBackground(r % 2 == 0 ? Color.WHITE : new Color(0xF7F5F2));
+            public void mouseClicked(MouseEvent e) {
+                int col = tabla.columnAtPoint(e.getPoint());
+                if (col >= 0) {
+                    ordenarPorColumna(col);
                 }
-                if (r < modeloTabla.getRowCount()) {
-                    String tipo = (String) modeloTabla.getValueAt(r, 2);
-                    setIcon("Carpeta".equals(tipo)
-                            ? UIManager.getIcon("FileView.directoryIcon")
-                            : UIManager.getIcon("FileView.fileIcon"));
+            }
+        });
+
+        tabla.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    File f = getArchivoSeleccionado();
+                    if (f != null && f.isDirectory() && onNavegar != null) {
+                        onNavegar.accept(f.getAbsolutePath());
+                    }
                 }
-                return this;
             }
-        };
-
-        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object v, boolean sel, boolean focus, int r, int c) {
-                super.getTableCellRendererComponent(t, v, sel, focus, r, c);
-                setHorizontalAlignment(SwingConstants.RIGHT);
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 14));
-                if (!sel) {
-                    setBackground(r % 2 == 0 ? Color.WHITE : new Color(0xF7F5F2));
-                }
-                return this;
-            }
-        };
-
-        TableColumnModel cols = tabla.getColumnModel();
-        cols.getColumn(0).setPreferredWidth(260);
-        cols.getColumn(1).setPreferredWidth(160);
-        cols.getColumn(2).setPreferredWidth(130);
-        cols.getColumn(3).setPreferredWidth(90);
-        cols.getColumn(0).setCellRenderer(nombreRenderer);
-        cols.getColumn(1).setCellRenderer(cellRenderer);
-        cols.getColumn(2).setCellRenderer(cellRenderer);
-        cols.getColumn(3).setCellRenderer(rightRenderer);
-
-        JTableHeader header = tabla.getTableHeader();
-        header.setFont(new Font("Tahoma", Font.BOLD, 12));
-        header.setBackground(new Color(0xE2DEDB));
-        header.setForeground(new Color(0x222222));
-        header.setPreferredSize(new Dimension(0, 30));
-        header.setReorderingAllowed(false);
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xBBB8AF)));
-
-        DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object v, boolean sel, boolean focus, int r, int c) {
-                super.getTableCellRendererComponent(t, v, sel, focus, r, c);
-                setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(0xD0CCC8)),
-                        BorderFactory.createEmptyBorder(0, 10, 0, 6)));
-                setBackground(new Color(0xE2DEDB));
-                setFont(new Font("Tahoma", Font.BOLD, 12));
-                return this;
-            }
-        };
-        for (int i = 0; i < cols.getColumnCount(); i++) {
-            cols.getColumn(i).setHeaderRenderer(headerRenderer);
-        }
-
-        DefaultTableCellRenderer headerRight = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object v, boolean sel, boolean focus, int r, int c) {
-                super.getTableCellRendererComponent(t, v, sel, focus, r, c);
-                setHorizontalAlignment(SwingConstants.RIGHT);
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 14));
-                setBackground(new Color(0xE2DEDB));
-                setFont(new Font("Tahoma", Font.BOLD, 12));
-                return this;
-            }
-        };
-        cols.getColumn(3).setHeaderRenderer(headerRight);
+        });
 
         JScrollPane scroll = new JScrollPane(tabla);
+        scroll.getViewport().setBackground(Color.WHITE);
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.getVerticalScrollBar().setUnitIncrement(24);
-        scroll.setBackground(Color.WHITE);
         add(scroll, BorderLayout.CENTER);
     }
 
     public int cargarCarpeta(String ruta) {
         this.carpetaActual = ruta;
-        modeloTabla.setRowCount(0);
         File dir = new File(ruta);
-        File[] items = dir.listFiles();
-        if (items == null) {
+        File[] hijos = dir.listFiles(f -> !f.isHidden());
+
+        modeloTabla.setRowCount(0);
+        if (hijos == null) {
             return 0;
         }
 
-        java.util.Arrays.sort(items, (a, b) -> {
-            if (a.isDirectory() != b.isDirectory()) {
-                return a.isDirectory() ? -1 : 1;
-            }
-            return a.getName().compareToIgnoreCase(b.getName());
-        });
+        ListaEnlazadaArchivos lista = net.convertirALista(hijos);
+        Ordenador.para(Criterio.NOMBRE).ordenar(lista, Criterio.NOMBRE);
 
-        int count = 0;
-        for (File f : items) {
-            if (f.isHidden()) {
-                continue;
-            }
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
+        NodoArchivo actual = lista.getCabeza();
+        while (actual != null) {
             modeloTabla.addRow(new Object[]{
-                f.getName(),
-                SDF.format(new Date(f.lastModified())),
-                f.isDirectory() ? "Carpeta" : obtenerTipo(f),
-                f.isDirectory() ? "" : formatearTamano(f.length())
+                actual.getNombre(),
+                sdf.format(actual.getFechaModificacion()),
+                actual.getTipo(),
+                actual.getTamano()
             });
-            count++;
+            actual = actual.getSiguiente();
         }
-        return count;
+        return hijos.length;
+    }
+
+    private void ordenarPorColumna(int col) {
+        if (carpetaActual == null) {
+            return;
+        }
+        Criterio crit;
+        switch (col) {
+            case COL_NOMBRE:
+                crit = Criterio.NOMBRE;
+                break;
+            case COL_FECHA:
+                crit = Criterio.FECHA;
+                break;
+            case COL_TIPO:
+                crit = Criterio.TIPO;
+                break;
+            case COL_TAMANO:
+                crit = Criterio.TAMANO;
+                break;
+            default:
+                return;
+        }
+
+        File[] hijos = new File(carpetaActual).listFiles(f -> !f.isHidden());
+        if (hijos == null) {
+            return;
+        }
+
+        ListaEnlazadaArchivos lista = net.convertirALista(hijos);
+        Ordenador.para(crit).ordenar(lista, crit);
+
+        modeloTabla.setRowCount(0);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
+        NodoArchivo actual = lista.getCabeza();
+        while (actual != null) {
+            modeloTabla.addRow(new Object[]{
+                actual.getNombre(),
+                sdf.format(actual.getFechaModificacion()),
+                actual.getTipo(),
+                actual.getTamano()
+            });
+            actual = actual.getSiguiente();
+        }
     }
 
     public void organizar() {
-        JOptionPane.showMessageDialog(this,
-                "Funcion Organizar pendiente de implementacion por Alumno 2.",
-                "Pendiente", JOptionPane.INFORMATION_MESSAGE);
+        if (carpetaActual == null) {
+            return;
+        }
+        OrganizadorDeArchivos org = new OrganizadorDeArchivos();
+        ResultadoOperacion res = org.organizar(new File(carpetaActual));
+        JOptionPane.showMessageDialog(this, res.getMensaje(), "Organizar",
+                res.isExito() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
+        cargarCarpeta(carpetaActual);
     }
 
     public void nuevaCarpeta() {
         if (carpetaActual == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Seleccione una carpeta en el arbol primero.");
             return;
         }
-        String nombre = JOptionPane.showInputDialog(this,
-                "Nombre de la nueva carpeta:", "Nueva carpeta",
-                JOptionPane.PLAIN_MESSAGE);
-        if (nombre == null) {
-            return;
+        String nombre = JOptionPane.showInputDialog(this, "Nombre de la carpeta:");
+        if (nombre != null && !nombre.trim().isEmpty()) {
+            ResultadoOperacion res = gestor.crearCarpeta(new File(carpetaActual), nombre);
+            if (!res.isExito()) {
+                JOptionPane.showMessageDialog(this, res.getMensaje(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            cargarCarpeta(carpetaActual);
         }
-
-        ResultadoOperacion res = gestor.crearCarpeta(new File(carpetaActual), nombre);
-        if (res.isExito()) {
-            cargarCarpeta(carpetaActual);  
-        }
-        JOptionPane.showMessageDialog(this, res.getMensaje(),
-                res.isExito() ? "Exito" : "Error",
-                res.isExito() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
     public void copiar() {
-        File sel = getArchivoSeleccionado();
-        if (sel == null) {
-            JOptionPane.showMessageDialog(this, "Selecciona un archivo o carpeta primero.");
-            return;
+        File[] seleccion = getArchivosSeleccionados();
+        if (seleccion.length > 0) {
+            gestor.copiar(seleccion);
         }
-        ResultadoOperacion res = gestor.copiar(new File[]{sel});
-        JOptionPane.showMessageDialog(this, res.getMensaje(),
-                res.isExito() ? "Copiado" : "Error",
-                res.isExito() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
     public void pegar() {
-        if (carpetaActual == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Seleccione una carpeta destino en el arbol primero.");
+        if (carpetaActual == null || !gestor.tienePortapapeles()) {
             return;
         }
-        ResultadoOperacion res = gestor.copiar(new File(carpetaActual));
-        if (res.isExito()) {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Desea pegar " + gestor.cantidadEnPortapapeles() + " elemento(s)?",
+                "Confirmar", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            gestor.pegar(new File(carpetaActual));
             cargarCarpeta(carpetaActual);
         }
-        JOptionPane.showMessageDialog(this, res.getMensaje(),
-                res.isExito() ? "Pegado" : "Error",
-                res.isExito() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
     public void renombrar() {
-        File sel = getArchivoSeleccionado();
-        if (sel == null) {
-            JOptionPane.showMessageDialog(this, "Selecciona un archivo o carpeta primero.");
+        File f = getArchivoSeleccionado();
+        if (f == null) {
             return;
         }
-        String nuevoNombre = JOptionPane.showInputDialog(this,
-                "Nuevo nombre:", sel.getName());
-        if (nuevoNombre == null) {
-            return;
-        }
-
-        ResultadoOperacion res = gestor.renombrar(sel, nuevoNombre);
-        if (res.isExito()) {
+        String nuevo = JOptionPane.showInputDialog(this, "Nuevo nombre:", f.getName());
+        if (nuevo != null && !nuevo.trim().isEmpty() && !nuevo.equals(f.getName())) {
+            ResultadoOperacion res = gestor.renombrar(f, nuevo);
+            if (!res.isExito()) {
+                JOptionPane.showMessageDialog(this, res.getMensaje(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
             cargarCarpeta(carpetaActual);
         }
-        JOptionPane.showMessageDialog(this, res.getMensaje(),
-                res.isExito() ? "Renombrado" : "Error",
-                res.isExito() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
-    private String obtenerTipo(File f) {
+    private String clasificarBreve(File f) {
+        if (f.isDirectory()) {
+            return "Carpeta de archivos";
+        }
         String n = f.getName().toLowerCase();
-        if (n.endsWith(".jpg") || n.endsWith(".jpeg")
-                || n.endsWith(".png") || n.endsWith(".gif")) {
+        if (n.endsWith(".jpg") || n.endsWith(".png") || n.endsWith(".gif")) {
             return "Imagen";
         }
-        if (n.endsWith(".pdf")) {
-            return "Documento PDF";
+        if (n.endsWith(".pdf") || n.endsWith(".docx") || n.endsWith(".txt")) {
+            return "Documento";
         }
-        if (n.endsWith(".docx") || n.endsWith(".doc")) {
-            return "Documento Word";
-        }
-        if (n.endsWith(".xlsx") || n.endsWith(".xls")) {
-            return "Hoja de calculo";
-        }
-        if (n.endsWith(".txt")) {
-            return "Texto plano";
-        }
-        if (n.endsWith(".mp3") || n.endsWith(".wav")
-                || n.endsWith(".flac")) {
+        if (n.endsWith(".mp3") || n.endsWith(".wav") || n.endsWith(".flac")) {
             return "Musica";
         }
-        if (n.endsWith(".mp4") || n.endsWith(".avi")
-                || n.endsWith(".mkv")) {
+        if (n.endsWith(".mp4") || n.endsWith(".avi") || n.endsWith(".mkv")) {
             return "Video";
         }
-        if (n.endsWith(".zip") || n.endsWith(".rar")
-                || n.endsWith(".7z")) {
+        if (n.endsWith(".zip") || n.endsWith(".rar") || n.endsWith(".7z")) {
             return "Comprimido";
         }
         if (n.endsWith(".exe")) {
@@ -308,6 +265,9 @@ public class PanelContenido extends JPanel {
     }
 
     private String formatearTamano(long bytes) {
+        if (bytes <= 0) {
+            return "";
+        }
         if (bytes < 1024) {
             return bytes + " B";
         }
@@ -325,11 +285,21 @@ public class PanelContenido extends JPanel {
         if (fila < 0 || carpetaActual == null) {
             return null;
         }
-        String nombre = (String) modeloTabla.getValueAt(fila, 0);
+        String nombre = (String) modeloTabla.getValueAt(fila, COL_NOMBRE);
         return new File(carpetaActual, nombre);
     }
 
-    public String getCarpetaActual() {
-        return carpetaActual;
+    public File[] getArchivosSeleccionados() {
+        int[] filas = tabla.getSelectedRows();
+        File[] selec = new File[filas.length];
+        for (int i = 0; i < filas.length; i++) {
+            String nombre = (String) modeloTabla.getValueAt(filas[i], COL_NOMBRE);
+            selec[i] = new File(carpetaActual, nombre);
+        }
+        return selec;
+    }
+
+    public void setOnNavegar(Consumer<String> c) {
+        this.onNavegar = c;
     }
 }
