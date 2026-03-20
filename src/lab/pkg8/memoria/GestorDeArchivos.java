@@ -5,6 +5,10 @@
 package lab.pkg8.memoria;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 
 /**
  *
@@ -130,6 +134,8 @@ public class GestorDeArchivos {
         return new ResultadoOperacion(pegados > 0, mensaje, pegados, errores);
     }
     
+    
+    // metodos auciliares 
     private boolean nombreValido(String nombre){
         if(nombre == null || nombre.trim().isEmpty()){
             return false;
@@ -143,13 +149,58 @@ public class GestorDeArchivos {
         return true;
     }
     private File generarNombreUnico(File carpeta, String nombreOriginal){
-        
+        File name = new File(carpeta, "copia_" + nombreOriginal);
+        int contador = 2;
+        while(name.exists()){
+            name = new File(carpeta, "copia("+contador+")_" + nombreOriginal);
+            contador++;
+        }
+        return name;
     }
     private boolean copiarCarpetaRecursivo(File origen, File destino){
-        
+        if(!destino.exists()){
+            destino.mkdirs();
+        }
+        File [] contenido = origen.listFiles();
+        if(contenido == null){
+            return true;
+        }
+        boolean exito = true;
+        for (int i = 0; i < contenido.length; i++) {
+            File nuevoDestino = new File(destino, contenido[i].getName());
+            if(contenido[i].isDirectory()){
+                exito = exito && copiarCarpetaRecursivo(contenido[i],nuevoDestino);
+            }else{
+                exito = exito && copiarArchivo(contenido[i],nuevoDestino);
+            }
+            
+        }
+        return exito;
     }
     private boolean copiarArchivo(File origen, File destino){
-        
+        try(FileInputStream fis =  new FileInputStream(origen);
+            FileOutputStream fos = new  FileOutputStream(destino);
+            FileChannel fcOrigen = fis.getChannel();
+            FileChannel fcDestino = fos.getChannel()){
+            
+            fcDestino.transferFrom(fcOrigen, 0, fcOrigen.size());
+            return true;
+            
+        }catch(IOException e){
+            System.out.println("Error al copiar: " + e.getMessage());
+            return false;
+        }
     }
     
+    // getters
+    
+    public boolean tienePortapapeles(){
+        return portapapeles != null && portapapeles.length > 0;
+    }
+    public int cantidadEnPortapapeles(){
+        if(portapapeles == null){
+            return 0;
+        }
+        return portapapeles.length;
+    }
 }
