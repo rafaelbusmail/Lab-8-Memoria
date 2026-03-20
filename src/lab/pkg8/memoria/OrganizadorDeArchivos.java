@@ -3,11 +3,74 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package lab.pkg8.memoria;
-
+import java.io.File;
 /**
  *
  * @author diego
  */
 public class OrganizadorDeArchivos {
-    
+    private static final String[] imagenes = {"jpg", "png", "gif"};
+       private static final String[] documentos = {"pdf", "docx", "txt"};
+          private static final String[] musica = {"mp3", "wav"};
+          
+          public ResultadoOperacion organizar(File carpeta){
+              if(carpeta == null || !carpeta.isDirectory()){
+                  return new ResultadoOperacion(false, "Seleccione una carpeta valida.",0,0);
+              }
+              File [] contenido =  carpeta.listFiles();
+              if(contenido == null || contenido.length == 0){
+                    return new ResultadoOperacion(false, "La carpeta esta vacia, no hay archivo para organizar.",0,0);
+              }
+              int movidos = 0;
+              int errores = 0;
+              for (int i = 0; i < contenido.length; i++) {
+                  File archivo = contenido[i];
+                  if(archivo.isDirectory()){
+                      continue;
+                  }
+                  String nameSubcarpeta = clasificar(archivo);
+                  if(nameSubcarpeta == null){
+                      continue;
+                  }
+                  File Subcarpeta = new File(carpeta,nameSubcarpeta);
+                  if(!Subcarpeta.exists()){
+                      if(!Subcarpeta.mkdir()){
+                          errores++;
+                          continue;
+                      }
+                  }
+                  File destino = new File(Subcarpeta, archivo.getName());
+                  if(destino.exists()){
+                      destino = generarNombreUnico(Subcarpeta, archivo.getName());
+                      
+                  }
+                  if(archivo.renameTo(destino)){
+                      movidos++;
+                  }else{
+                      errores++;
+                  }
+              }
+              String hayerroes = "";
+              if(errores > 0){
+                  hayerroes = "Errores" + errores;
+              }else{
+                  hayerroes = "Sin errores";
+              }
+              String mensaje = "Organizacion completada.\n"
+                      + "Archivos movidos: "+ movidos + "\n"
+                      + hayerroes;
+              return new ResultadoOperacion(true,mensaje,movidos,errores);
+          }
+          private String clasificar(File archivo){
+              String ext = obtener Extension(archivo);
+          }
+           private File generarNombreUnico(File carpeta, String nombreOriginal){
+        File name = new File(carpeta, "copia_" + nombreOriginal);
+        int contador = 2;
+        while(name.exists()){
+            name = new File(carpeta, "copia("+contador+")_" + nombreOriginal);
+            contador++;
+        }
+        return name;
+    }
 }

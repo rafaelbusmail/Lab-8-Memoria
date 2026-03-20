@@ -27,7 +27,7 @@ public class GestorDeArchivos {
         if(destino == null || !destino.isDirectory()){
             return new ResultadoOperacion(false, "Seleccione una carpeta en el arbol primero",0,0);
         }
-         if(nombre == null || !nombre.trim().isEmpty()){
+         if(nombre == null || nombre.trim().isEmpty()){
             return new ResultadoOperacion(false, "El nombre no puede estar vacio",0,0);
         }
           if(!nombreValido(nombre)){
@@ -38,7 +38,7 @@ public class GestorDeArchivos {
               return new ResultadoOperacion(false, "Ya existe una carpeta llamada \""+nombre.trim()+"\".",0,0);
           }
           if(nueva.mkdir()){
-              return new ResultadoOperacion(false, "Carpeta \""+ nombre.trim()+"\" creada exitosamente,",1,0);
+              return new ResultadoOperacion(true, "Carpeta \""+ nombre.trim()+"\" creada exitosamente,",1,0);
           }else{
              return new ResultadoOperacion(false, "No se pudo crear la carpeta.",0,1); 
           }
@@ -58,7 +58,7 @@ public class GestorDeArchivos {
           if(destino.exists()){
               return new ResultadoOperacion(false, "Ya existe un elemento llamado \""+nuevoNombre.trim()+"\".",0,0);
           }
-          if(destino.renameTo(destino)){
+          if(archivo.renameTo(destino)){
               return new ResultadoOperacion(true, "\""+ archivo.getName()+"\" renombrado a \""+nuevoNombre.trim()+"\" exitosamente",1,0);
           }else{
              return new ResultadoOperacion(false, "No se pudo renombrar.",0,1); 
