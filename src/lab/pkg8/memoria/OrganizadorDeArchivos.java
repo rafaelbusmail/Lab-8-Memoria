@@ -62,7 +62,23 @@ public class OrganizadorDeArchivos {
               return new ResultadoOperacion(true,mensaje,movidos,errores);
           }
           private String clasificar(File archivo){
-              String ext = obtener Extension(archivo);
+              String ext = obtenerExtension(archivo);
+              for (int i = 0; i < imagenes.length; i++) {
+                  if(imagenes[i].equals(ext)){
+                      return "Imagenes";
+                  }
+              }
+              for (int i = 0; i < documentos.length; i++) {
+                  if(documentos[i].equals(ext)){
+                      return "Documentos";
+                  }
+              }
+              for (int i = 0; i < musica.length; i++) {
+                  if(musica[i].equals(ext)){
+                      return "Musica";
+                  }
+              }
+              return null;
           }
            private File generarNombreUnico(File carpeta, String nombreOriginal){
         File name = new File(carpeta, "copia_" + nombreOriginal);
@@ -73,4 +89,12 @@ public class OrganizadorDeArchivos {
         }
         return name;
     }
+           private String obtenerExtension(File archivo){
+               String nombre = archivo.getName();
+               int punto = nombre.lastIndexOf('.');
+               if(punto == -1 || punto == nombre.length() - 1){
+                   return "";
+               }
+               return nombre.substring(punto + 1).toLowerCase();
+           }
 }
