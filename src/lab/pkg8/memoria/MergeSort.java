@@ -52,7 +52,8 @@ public class MergeSort implements Ordenador {
             return a;
         }
         NodoArchivo resultado;
-        if (a.getFechaModificacion().compareTo(b.getFechaModificacion()) <= 0) {
+ 
+       if (a.getFechaModificacion().compareTo(b.getFechaModificacion()) <= 0) {
             resultado = a;
             resultado.setSiguiente(mezclar(a.getSiguiente(), b));
         } else {
