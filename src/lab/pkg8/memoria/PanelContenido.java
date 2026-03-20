@@ -6,7 +6,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
-
 import java.util.function.Consumer;
 
 public class PanelContenido extends JPanel {
@@ -19,7 +18,6 @@ public class PanelContenido extends JPanel {
     private static final String[] COLUMNAS = {
             "Nombre", "Fecha de modificacion", "Tipo", "Tamano"
     };
-    
 
     private JTable tabla;
     private DefaultTableModel modeloTabla;
@@ -215,27 +213,9 @@ public class PanelContenido extends JPanel {
             return 0;
         }
 
-<<<<<<< HEAD
-        ListaEnlazadaArchivos lista = net.convertirALista(hijos);
-        Ordenador.para(Criterio.NOMBRE).ordenar(lista, Criterio.NOMBRE);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
-        NodoArchivo actual = lista.getCabeza();
-        while (actual != null) {
-            modeloTabla.addRow(new Object[] {
-                    actual.getNombre(),
-                    sdf.format(actual.getFechaModificacion()),
-                    actual.getTipo(),
-                    actual.getTamano()
-            });
-            actual = actual.getSiguiente();
-        }
-        return hijos.length;
-=======
         listaActual = UtilArchivos.convertirALista(items);
         aplicarOrden();
         return items.length;
->>>>>>> fix-conflicto
     }
 
     private void aplicarOrden() {
@@ -267,16 +247,6 @@ public class PanelContenido extends JPanel {
 
     private void poblarTabla() {
         modeloTabla.setRowCount(0);
-<<<<<<< HEAD
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
-        NodoArchivo actual = lista.getCabeza();
-        while (actual != null) {
-            modeloTabla.addRow(new Object[] {
-                    actual.getNombre(),
-                    sdf.format(actual.getFechaModificacion()),
-                    actual.getTipo(),
-                    actual.getTamano()
-=======
         NodoArchivo nodo = listaActual.getCabeza();
         while (nodo != null) {
             modeloTabla.addRow(new Object[]{
@@ -284,7 +254,6 @@ public class PanelContenido extends JPanel {
                 SDF.format(nodo.getFechaModificacion()),
                 nodo.getTipo(),
                 nodo.getTamano()
->>>>>>> fix-conflicto
             });
             nodo = nodo.getSiguiente();
         }
